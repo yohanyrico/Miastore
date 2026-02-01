@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Productos - Admin</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <h1>👕 Admin Panel</h1>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="/admin/dashboard.html">Dashboard</a></li>
+                <li><a href="/admin/manage-products.html" class="active">Productos</a></li>
+                <li><a href="#" onclick="logout()">Cerrar Sesión</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container" style="padding: 2rem 0;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h1>Gestión de Productos</h1>
+            <button onclick="showAddForm()" class="btn btn-primary">Agregar Producto</button>
+        </div>
+
+        <div id="productForm" style="display: none; margin: 2rem 0;">
+            <h2 id="formTitle">Agregar Producto</h2>
+            <form id="addProductForm">
+                <div class="form-group">
+                    <label>Nombre</label>
+                    <input type="text" id="productName" required>
+                </div>
+                <div class="form-group">
+                    <label>Descripción</label>
+                    <textarea id="productDescription" rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Precio</label>
+                    <input type="number" id="productPrice" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label>Stock</label>
+                    <input type="number" id="productStock" required>
+                </div>
+                <div class="form-group">
+                    <label>Categoría</label>
+                    <select id="productCategory">
+                        <option value="Camisetas">Camisetas</option>
+                        <option value="Pantalones">Pantalones</option>
+                        <option value="Vestidos">Vestidos</option>
+                        <option value="Zapatos">Zapatos</option>
+                        <option value="Accesorios">Accesorios</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Talla</label>
+                    <input type="text" id="productSize" placeholder="S, M, L, XL">
+                </div>
+                <div class="form-group">
+                    <label>Color</label>
+                    <input type="text" id="productColor">
+                </div>
+                <div class="form-group">
+                    <label>Imagen</label>
+                    <input type="file" id="productImage" accept="image/*">
+                </div>
+                <button type="submit" class="btn btn-primary">Guardar</button>
+                <button type="button" onclick="hideForm()" class="btn btn-secondary">Cancelar</button>
+            </form>
+        </div>
+
+        <div id="productsContainer"></div>
+    </div>
+
+    <script src="/js/main.js"></script>
+    <script>
+        let editingProductId = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!isAdmin()) {
+                alert('Acceso denegado');
+                window.location.href = '/index.html';
+                return;
+            }
+            loadProducts();
+        });
+
+        async function loadProducts() {
+            try {
+                const response = await fetch('/api/products');
+                const products = await response.json();
+                displayProducts(products);
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        function displayProducts(products) {
+            const container = document.getElementById('productsContainer');
+            container.innerHTML = `
+                <table class="cart-table">
+                    <thead>
+                        <tr>
+                            <th>Imagen</th>
+                            <th>Nombre</th>
+                            <th>Precio</th>
+                            <th>Stock</th>
+                            <th>Categoría</th>
+                            <th>Estado</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${products.map(product => `
+                            <tr>
+                                <td><img src="${product.imageUrl || '/uploads/default.jpg'}" 
+                                    style="width: 50px; height: 50px; object-fit: cover;"></td>
+                                <td>${product.name}</td>
+                                <td>$${product.price}</td>
+                                <td>${product.stock}</td>
+                                <td>${product.category || 'N/A'}</td>
+                                <td>${product.active ? 'Activo' : 'Inactivo'}</td>
+                                <td>
+                                    <button onclick="editProduct(${product.id})" class="btn btn-secondary btn-sm">Editar</button>
+                                    <button onclick="deleteProduct(${product.id})" class="btn btn-danger btn-sm">Eliminar</button>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        function showAddForm() {
+            editingProductId = null;
+            document.getElementById('formTitle').textContent = 'Agregar Producto';
+            document.getElementById('addProductForm').reset();
+            document.getElementById('productForm').style.display = 'block';
+        }
+
+        function hideForm() {
+            document.getElementById('productForm').style.display = 'none';
+            editingProductId = null;
+        }
+
+        async function editProduct(id) {
+            try {
+                const response = await fetch(`/api/products/${id}`);
+                const product = await response.json();
+
+                editingProductId = id;
+                document.getElementById('formTitle').textContent = 'Editar Producto';
+                document.getElementById('productName').value = product.name;
+                document.getElementById('productDescription').value = product.description || '';
+                document.getElementById('productPrice').value = product.price;
+                document.getElementById('productStock').value = product.stock;
+                document.getElementById('productCategory').value = product.category || '';
+                document.getElementById('productSize').value = product.size || '';
+                document.getElementById('productColor').value = product.color || '';
+                
+                document.getElementById('productForm').style.display = 'block';
+            } catch (error) {
+                alert('Error al cargar producto');
+            }
+        }
+
+        document.getElementById('addProductForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData();
+            const productData = {
+                name: document.getElementById('productName').value,
+                description: document.getElementById('productDescription').value,
+                price: document.getElementById('productPrice').value,
+                stock: document.getElementById('productStock').value,
+                category: document.getElementById('productCategory').value,
+                size: document.getElementById('productSize').value,
+                color: document.getElementById('productColor').value
+            };
+
+            formData.append('product', new Blob([JSON.stringify(productData)], { type: 'application/json' }));
+
+            const imageFile = document.getElementById('productImage').files[0];
+            if (imageFile) {
+                formData.append('image', imageFile);
+            }
+
+            try {
+                const url = editingProductId ? `/api/admin/products/${editingProductId}` : '/api/admin/products';
+                const method = editingProductId ? 'PUT' : 'POST';
+
+                const response = await fetch(url, {
+                    method: method,
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+                    body: formData
+                });
+
+                if (response.ok) {
+                    alert('Producto guardado exitosamente');
+                    hideForm();
+                    loadProducts();
+                } else {
+                    alert('Error al guardar producto');
+                }
+            } catch (error) {
+                alert('Error en el servidor');
+            }
+        });
+
+        async function deleteProduct(id) {
+            if (!confirm('¿Estás seguro de eliminar este producto?')) return;
+
+            try {
+                const response = await fetch(`/api/admin/products/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                });
+
+                if (response.ok) {
+                    alert('Producto eliminado');
+                    loadProducts();
+                } else {
+                    alert('Error al eliminar');
+                }
+            } catch (error) {
+                alert('Error en el servidor');
+            }
+        }
+    </script>
+</body>
+</html>

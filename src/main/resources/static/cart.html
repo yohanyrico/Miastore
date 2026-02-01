@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carrito - Tienda de Ropa</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <h1><a href="/index.html">👕 MiaStore</a></h1>
+            </div>
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="/index.html">Inicio</a></li>
+                <li><a href="/products.html">Productos</a></li>
+                <li><a href="/cart.html" class="active">Carrito <span id="cartCount">0</span></a></li>
+                <li id="authLinks"></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container" style="padding: 2rem 0;">
+        <h1>Mi Carrito</h1>
+        <div id="cartItems"></div>
+
+        <div id="checkoutSection" style="display: none;">
+            <h2>Información de Envío</h2>
+            <form id="checkoutForm">
+                <div class="form-group">
+                    <label>Dirección de Envío</label>
+                    <textarea id="shippingAddress" required rows="3" placeholder="Ej. calle 100 # 10 - 10"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Teléfono</label>
+                    <input type="tel" id="phone" required placeholder="321 123 4567">
+                </div>
+                <div class="cart-total">
+                    <h3>Total: $<span id="totalAmount">0</span></h3>
+                </div>
+                <button type="submit" class="btn btn-primary">Finalizar Compra</button>
+            </form>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 MiaStore-Bogotá. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <script src="/js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            updateNavigation();
+            updateCartCount();
+            loadCart();
+        });
+
+        function loadCart() {
+            const cart = getCart();
+            const container = document.getElementById('cartItems');
+            const checkoutSection = document.getElementById('checkoutSection');
+
+            if (cart.length === 0) {
+                container.innerHTML = '<p style="text-align: center; color: #666;">Tu carrito está vacío</p>';
+                checkoutSection.style.display = 'none';
+                return;
+            }
+
+            checkoutSection.style.display = 'block';
+            let total = 0;
+
+            container.innerHTML = `
+                <table class="cart-table">
+                    <thead>
+                        <tr>
+                            <th>Producto</th>
+                            <th>Precio</th>
+                            <th>Cantidad</th>
+                            <th>Subtotal</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${cart.map(item => {
+                const subtotal = item.price * item.quantity;
+                total += subtotal;
+                return `
+                                <tr>
+                                    <td>${item.name}</td>
+                                    <td>$${item.price.toFixed(2)}</td>
+                                    <td>
+                                        <input type="number" value="${item.quantity}" min="1"
+                                        onchange="updateQuantity(${item.id}, this.value)"
+                                        style="width: 60px; padding: 0.3rem;">
+                                    </td>
+                                    <td>$${subtotal.toFixed(2)}</td>
+                                    <td>
+                                        <button onclick="removeFromCart(${item.id})" class="btn btn-danger">Eliminar</button>
+                                    </td>
+                                </tr>
+                            `;
+            }).join('')}
+                    </tbody>
+                </table>
+            `;
+
+            document.getElementById('totalAmount').textContent = total.toFixed(2);
+        }
+
+        document.getElementById('checkoutForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            // Verificar que el usuario esté logueado
+            if (!isLoggedIn()) {
+                alert('Debes iniciar sesión para realizar una compra');
+                window.location.href = '/login.html';
+                return;
+            }
+
+            const cart = getCart();
+
+            if (cart.length === 0) {
+                alert('El carrito está vacío');
+                return;
+            }
+
+            // ✅ Preparar datos de la orden
+            const orderData = {
+                shippingAddress: document.getElementById('shippingAddress').value.trim(),
+                phone: document.getElementById('phone').value.trim(),
+                items: cart.map(item => ({
+                    productId: item.id,  // ✅ IMPORTANTE: Enviar productId
+                    quantity: item.quantity
+                }))
+            };
+
+            console.log('📦 Enviando orden:', JSON.stringify(orderData, null, 2));
+
+            try {
+                const response = await fetchWithAuth('/api/orders', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(orderData)
+                });
+
+                if (!response) {
+                    alert('Error: No se pudo conectar con el servidor');
+                    return;
+                }
+
+                if (response.ok) {
+                    const createdOrder = await response.json();
+                    console.log('✅ Orden creada:', createdOrder);
+
+                    alert('¡Orden creada exitosamente! Número de orden: #' + createdOrder.id);
+                    clearCart();
+                    window.location.href = '/index.html';
+                } else {
+                    const errorText = await response.text();
+                    console.error('❌ Error del servidor:', errorText);
+
+                    try {
+                        const errorJson = JSON.parse(errorText);
+                        alert('Error: ' + (errorJson.message || errorText));
+                    } catch {
+                        alert('Error: ' + errorText);
+                    }
+                }
+            } catch (error) {
+                console.error('❌ Error al procesar la orden:', error);
+                alert('Error al procesar la orden: ' + error.message);
+            }
+        });
+    </script>
+</body>
+
+</html>

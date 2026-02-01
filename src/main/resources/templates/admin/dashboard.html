@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Admin - Tienda de Ropa</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <h1>👕 Admin Panel</h1>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="/admin/dashboard.html" class="active">Dashboard</a></li>
+                <li><a href="/admin/manage-products.html">Productos</a></li>
+                <li><a href="#" onclick="logout()">Cerrar Sesión</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container" style="padding: 2rem 0;">
+        <h1>Dashboard Administrativo</h1>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Total Productos</h3>
+                <p id="totalProducts">0</p>
+            </div>
+            <div class="stat-card">
+                <h3>Total Órdenes</h3>
+                <p id="totalOrders">0</p>
+            </div>
+        </div>
+
+        <h2>Órdenes Recientes</h2>
+        <div id="ordersContainer"></div>
+    </div>
+
+    <script src="/js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            if (!isAdmin()) {
+                alert('Acceso denegado');
+                window.location.href = '/index.html';
+                return;
+            }
+            loadDashboard();
+        });
+
+        async function loadDashboard() {
+            try {
+                const [productsRes, ordersRes] = await Promise.all([
+                    fetch('/api/products'),
+                    fetch('/api/admin/orders', {
+                        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                    })
+                ]);
+
+                const products = await productsRes.json();
+                const orders = await ordersRes.json();
+
+                document.getElementById('totalProducts').textContent = products.length;
+                document.getElementById('totalOrders').textContent = orders.length;
+
+                displayOrders(orders);
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        }
+
+        function displayOrders(orders) {
+            const container = document.getElementById('ordersContainer');
+            if (orders.length === 0) {
+                container.innerHTML = '<p>No hay órdenes</p>';
+                return;
+            }
+
+            container.innerHTML = `
+                <table class="cart-table">
+                    <thead>
+                        <tr>
+                            <th>Número de Orden</th>
+                            <th>Usuario</th>
+                            <th>Total</th>
+                            <th>Estado</th>
+                            <th>Fecha</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${orders.map(order => `
+                            <tr>
+                                <td>${order.orderNumber}</td>
+                                <td>${order.user?.username || 'N/A'}</td>
+                                <td>$${order.total}</td>
+                                <td>
+                                    <select onchange="updateOrderStatus(${order.id}, this.value)">
+                                        <option value="PENDING" ${order.status === 'PENDING' ? 'selected' : ''}>Pendiente</option>
+                                        <option value="PROCESSING" ${order.status === 'PROCESSING' ? 'selected' : ''}>Procesando</option>
+                                        <option value="SHIPPED" ${order.status === 'SHIPPED' ? 'selected' : ''}>Enviado</option>
+                                        <option value="DELIVERED" ${order.status === 'DELIVERED' ? 'selected' : ''}>Entregado</option>
+                                        <option value="CANCELLED" ${order.status === 'CANCELLED' ? 'selected' : ''}>Cancelado</option>
+                                    </select>
+                                </td>
+                                <td>${new Date(order.createdAt).toLocaleDateString()}</td>
+                                <td><button onclick="viewOrder(${order.id})" class="btn btn-secondary btn-sm">Ver</button></td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
+            `;
+        }
+
+        async function updateOrderStatus(orderId, status) {
+            try {
+                const response = await fetch(`/api/admin/orders/${orderId}/status?status=${status}`, {
+                    method: 'PUT',
+                    headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+                });
+
+                if (response.ok) {
+                    alert('Estado actualizado');
+                } else {
+                    alert('Error al actualizar');
+                }
+            } catch (error) {
+                alert('Error en el servidor');
+            }
+        }
+
+        function viewOrder(id) {
+            alert('Ver detalles de la orden ' + id);
+        }
+    </script>
+</body>
+</html>
