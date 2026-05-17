@@ -2,6 +2,10 @@
 FROM maven:3.8.5-openjdk-17 AS build
 WORKDIR /app
 COPY . .
+
+# Movemos el contenido de 'main/src' a la raíz 'src' para que Maven lo encuentre
+RUN mv main/src ./src || true
+
 RUN mvn clean package -DskipTests
 
 # Paso 2: Ejecutar la aplicación usando una imagen ligera de Java
