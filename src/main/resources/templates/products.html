@@ -1,0 +1,1131 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Productos - Tienda de Ropa</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <style>
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            gap: 2rem;
+        }
+
+        .header-section h1 {
+            margin: 0;
+        }
+
+        .upload-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            margin-bottom: 2rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Estilos para botones de admin en las tarjetas */
+        .admin-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .btn-edit {
+            background: #ff9c07;
+            color: #000;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            flex: 1;
+        }
+
+        .btn-edit:hover {
+            background: #e0a800;
+        }
+
+        .btn-delete {
+            background: #dc3545;
+            color: white;
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            flex: 1;
+        }
+
+        .btn-delete:hover {
+            background: #c82333;
+        }
+
+        /* Estilos para las tallas */
+        .sizes-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+        }
+
+        .size-option {
+            display: none;
+        }
+
+        .size-label {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 42px;
+            height: 42px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: #333;
+            background: #f9f9f9;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .size-label:hover {
+            border-color: #ff9c07;
+            background: #fff8ee;
+        }
+
+        .size-option:checked + .size-label {
+            background: #ff9c07;
+            color: #000;
+            border-color: #ff9c07;
+        }
+
+        /* Tallas en la tarjeta de producto */
+        .product-sizes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.35rem;
+            margin: 0.4rem 0;
+        }
+
+        .product-size-tag {
+            background: #f0f0f0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 2px 8px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        /* Modal para editar */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 2rem;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .modal-close:hover {
+            color: #000;
+        }
+
+        /* Modal seleccionar talla al agregar al carrito */
+        .size-modal-overlay {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+        }
+
+        .size-modal-box {
+            background: white;
+            margin: 15% auto;
+            padding: 1.8rem;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 380px;
+            position: relative;
+        }
+
+        .size-modal-box h3 {
+            margin: 0 0 0.25rem;
+            font-size: 1.15rem;
+        }
+
+        .size-modal-box .size-modal-subtitle {
+            color: #888;
+            font-size: 0.85rem;
+            margin-bottom: 1rem;
+        }
+
+        .size-modal-box .size-modal-close {
+            position: absolute;
+            top: 1rem;
+            right: 1.2rem;
+            font-size: 24px;
+            color: #aaa;
+            cursor: pointer;
+            line-height: 1;
+        }
+
+        .size-modal-box .size-modal-close:hover {
+            color: #000;
+        }
+
+        /* Radio-style exclusivo para el modal de carrito */
+        .cart-sizes-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1.2rem;
+        }
+
+        .cart-size-radio {
+            display: none;
+        }
+
+        .cart-size-label {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 42px;
+            height: 42px;
+            padding: 0 10px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: #333;
+            background: #f9f9f9;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .cart-size-label:hover {
+            border-color: #ff9c07;
+            background: #fff8ee;
+        }
+
+        .cart-size-radio:checked + .cart-size-label {
+            background: #222;
+            color: #fff;
+            border-color: #222;
+        }
+
+        .size-modal-box .btn-add-confirm {
+            width: 100%;
+            padding: 0.7rem;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .size-modal-box .btn-add-confirm:hover {
+            background: #218838;
+        }
+
+        .size-modal-box .btn-add-confirm:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        /* Imagen clickeable en la tarjeta */
+        .product-card img {
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .product-card img:hover {
+            transform: scale(1.03);
+            box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+        }
+
+        /* ─── Modal detalle producto ─── */
+        .detail-modal-overlay {
+            display: none;
+            position: fixed;
+            z-index: 3000;
+            inset: 0;
+            background: rgba(0,0,0,0.55);
+        }
+
+        .detail-modal-box {
+            background: white;
+            margin: 4% auto;
+            border-radius: 14px;
+            width: 92%;
+            max-width: 780px;
+            max-height: 88vh;
+            overflow-y: auto;
+            display: flex;
+            position: relative;
+        }
+
+        /* Imagen lado izquierdo */
+        .detail-modal-img-wrap {
+            flex: 0 0 42%;
+            max-width: 42%;
+        }
+
+        .detail-modal-img-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 14px 0 0 14px;
+            display: block;
+        }
+
+        /* Info lado derecho */
+        .detail-modal-info {
+            flex: 1;
+            padding: 2rem 2rem 2rem 1.8rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+        }
+
+        .detail-modal-close {
+            position: absolute;
+            top: 0.9rem;
+            right: 1.1rem;
+            font-size: 26px;
+            color: #fff;
+            cursor: pointer;
+            background: rgba(0,0,0,0.4);
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            transition: background 0.2s;
+            z-index: 1;
+        }
+
+        .detail-modal-close:hover {
+            background: rgba(0,0,0,0.65);
+        }
+
+        .detail-modal-info h2 {
+            margin: 0 0 0.3rem;
+            font-size: 1.5rem;
+        }
+
+        .detail-modal-info .detail-category {
+            font-size: 0.82rem;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            margin-bottom: 0.5rem;
+        }
+
+        .detail-modal-info .detail-price {
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: #e63946;
+            margin: 0.4rem 0 0.8rem;
+        }
+
+        .detail-modal-info .detail-description {
+            color: #555;
+            font-size: 0.92rem;
+            line-height: 1.5;
+            margin-bottom: 1rem;
+            flex-grow: 1;
+        }
+
+        .detail-modal-info .detail-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: #666;
+            padding: 0.35rem 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .detail-modal-info .detail-row span:last-child {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .detail-modal-info .detail-sizes-label {
+            font-size: 0.85rem;
+            color: #666;
+            margin: 1rem 0 0.4rem;
+        }
+
+        .detail-modal-info .detail-sizes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-bottom: 1.2rem;
+        }
+
+        .detail-modal-info .detail-size-tag {
+            background: #f0f0f0;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 4px 10px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .detail-modal-info .btn-detail-carrito {
+            margin-top: auto;
+            width: 100%;
+            padding: 0.75rem;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .detail-modal-info .btn-detail-carrito:hover {
+            background: #218838;
+        }
+
+        .detail-modal-info .btn-detail-carrito:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        /* Responsive: apilar vertical en móvil */
+        @media (max-width: 640px) {
+            .detail-modal-box {
+                flex-direction: column;
+                margin: 6% auto;
+            }
+
+            .detail-modal-img-wrap {
+                flex: none;
+                max-width: 100%;
+                height: 260px;
+            }
+
+            .detail-modal-img-wrap img {
+                border-radius: 14px 14px 0 0;
+                height: 100%;
+            }
+
+            .detail-modal-info {
+                padding: 1.4rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header-section {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <h1><a href="/index.html">👕 MiaStore</a></h1>
+            </div>
+            <ul class="nav-menu" id="navMenu">
+                <li><a href="/index.html">Inicio</a></li>
+                <li><a href="/products.html" class="active">Productos</a></li>
+                <li><a href="/cart.html">Carrito <span id="cartCount">0</span></a></li>
+                <li id="authLinks"></li>
+            </ul>
+        </div>
+    </nav>
+
+    <div class="container" style="padding: 2rem 0;">
+        <div class="header-section">
+            <h1>Nuestros Productos</h1>
+            <button id="createProductBtn" onclick="toggleProductForm()" class="btn btn-primary" style="display: none;">+ Crear Producto</button>
+        </div>
+
+        <!-- Formulario crear producto -->
+        <div id="productFormSection" class="upload-section" style="display: none;">
+            <h2>Crear Nuevo Producto</h2>
+            <form id="createProductForm" enctype="multipart/form-data">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="productName">Nombre del Producto *</label>
+                        <input type="text" id="productName" name="name" required placeholder="Ej: Camiseta Básica Blanca">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="productPrice">Precio ($) *</label>
+                        <input type="number" id="productPrice" name="price" step="100" min="0" max="10000000" required placeholder="Ej: 49900">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="productStock">Stock *</label>
+                        <input type="number" id="productStock" name="stock" min="0" required placeholder="50">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="productCategory">Categoría *</label>
+                        <select id="productCategory" name="category" required>
+                            <option value="">Seleccionar...</option>
+                            <option value="Camisetas">Camisetas</option>
+                            <option value="Pantalones">Pantalones</option>
+                            <option value="Vestidos">Vestidos</option>
+                            <option value="Zapatos">Zapatos</option>
+                            <option value="Accesorios">Accesorios</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Selección de tallas -->
+                <div class="form-group">
+                    <label>Tallas disponibles *</label>
+                    <div class="sizes-container" id="createSizesContainer">
+                        <!-- Se generan dinámicamente según la categoría -->
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="productDescription">Descripción</label>
+                    <textarea id="productDescription" name="description" rows="3" placeholder="Descripción del producto..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="productImage">Imagen del Producto *</label>
+                    <input type="file" id="productImage" name="image" accept="image/*" required>
+                </div>
+
+                <img id="imagePreview" src="" alt="Vista previa" style="max-width: 200px; display: none; margin: 1rem 0; border-radius: 5px;">
+
+                <div style="display: flex; gap: 1rem;">
+                    <button type="submit" class="btn btn-primary">Crear Producto</button>
+                    <button type="button" onclick="toggleProductForm()" class="btn btn-secondary">Cancelar</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Contenedor de productos -->
+        <div id="productsContainer" class="product-grid"></div>
+    </div>
+
+    <!-- Modal para editar producto -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeEditModal()">&times;</span>
+            <h2>Editar Producto</h2>
+            <form id="editProductForm" enctype="multipart/form-data">
+                <input type="hidden" id="editProductId">
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="editProductName">Nombre *</label>
+                        <input type="text" id="editProductName" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editProductPrice">Precio ($) *</label>
+                        <input type="number" id="editProductPrice" step="100" min="0" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editProductStock">Stock *</label>
+                        <input type="number" id="editProductStock" min="0" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="editProductCategory">Categoría *</label>
+                        <select id="editProductCategory" required>
+                            <option value="">Seleccionar...</option>
+                            <option value="Camisetas">Camisetas</option>
+                            <option value="Pantalones">Pantalones</option>
+                            <option value="Vestidos">Vestidos</option>
+                            <option value="Zapatos">Zapatos</option>
+                            <option value="Accesorios">Accesorios</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Selección de tallas en modal editar -->
+                <div class="form-group">
+                    <label>Tallas disponibles *</label>
+                    <div class="sizes-container" id="editSizesContainer">
+                        <!-- Se generan dinámicamente según la categoría -->
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="editProductDescription">Descripción</label>
+                    <textarea id="editProductDescription" rows="3"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label for="editProductImage">Nueva Imagen (opcional)</label>
+                    <input type="file" id="editProductImage" accept="image/*">
+                </div>
+
+                <img id="editImagePreview" src="" alt="Vista previa" style="max-width: 200px; margin: 1rem 0; border-radius: 5px;">
+
+                <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                    <button type="button" onclick="closeEditModal()" class="btn btn-secondary">Cancelar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal detalle del producto (se abre al hacer clic en la imagen) -->
+    <div id="detailModal" class="detail-modal-overlay">
+        <div class="detail-modal-box">
+            <span class="detail-modal-close" onclick="closeDetailModal()">&times;</span>
+            <div class="detail-modal-img-wrap">
+                <img id="detailImg" src="" alt="">
+            </div>
+            <div class="detail-modal-info">
+                <p class="detail-category" id="detailCategory"></p>
+                <h2 id="detailName"></h2>
+                <p class="detail-price" id="detailPrice"></p>
+                <p class="detail-description" id="detailDescription"></p>
+
+                <div class="detail-row">
+                    <span>Stock disponible</span>
+                    <span id="detailStock"></span>
+                </div>
+
+                <p class="detail-sizes-label" id="detailSizesLabel" style="display:none;">Tallas disponibles</p>
+                <div class="detail-sizes" id="detailSizes"></div>
+
+                <button class="btn-detail-carrito" id="btnDetailCarrito" onclick="detailAddToCart()">Agregar al Carrito</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal seleccionar talla antes de agregar al carrito -->
+    <div id="sizeModal" class="size-modal-overlay">
+        <div class="size-modal-box">
+            <span class="size-modal-close" onclick="closeSizeModal()">&times;</span>
+            <h3 id="sizeModalTitle">Nombre del producto</h3>
+            <p class="size-modal-subtitle">Selecciona una talla</p>
+            <div class="cart-sizes-container" id="cartSizesContainer"></div>
+            <button class="btn-add-confirm" id="btnConfirmSize" disabled onclick="confirmAddToCart()">Agregar al Carrito</button>
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2026 MiaStore-Bogotá. Todos los derechos reservados.</p>
+        </div>
+    </footer>
+
+    <script src="/js/main.js"></script>
+    <script>
+        let allProducts = [];
+
+        // Tallas según categoría de producto
+        const SIZES_BY_CATEGORY = {
+            'Camisetas':   ['XS', 'S', 'M', 'L', 'XL', 'XXL'],
+            'Pantalones':  ['28', '30', '32', '34', '36', '38', '40', '42'],
+            'Vestidos':    ['XS', 'S', 'M', 'L', 'XL', 'XXL'],
+            'Zapatos':     ['35', '36', '37', '38', '39', '40', '41', '42', '43', '44'],
+            'Accesorios':  ['Único']
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateNavigation();
+            updateCartCount();
+            loadProducts();
+            checkAdminAccess();
+
+            document.getElementById('productImage').addEventListener('change', previewImage);
+            document.getElementById('editProductImage').addEventListener('change', previewEditImage);
+            document.getElementById('createProductForm').addEventListener('submit', createProduct);
+            document.getElementById('editProductForm').addEventListener('submit', updateProduct);
+
+            // Cuando cambia la categoría en crear → regenerar tallas
+            document.getElementById('productCategory').addEventListener('change', function () {
+                renderSizes('createSizesContainer', this.value, []);
+            });
+
+            // Cuando cambia la categoría en editar → regenerar tallas (sin pre-selección)
+            document.getElementById('editProductCategory').addEventListener('change', function () {
+                renderSizes('editSizesContainer', this.value, []);
+            });
+        });
+
+        // ─── Genera los checkboxes de tallas dentro de un contenedor ───
+        function renderSizes(containerId, category, selectedSizes) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+
+            const sizes = SIZES_BY_CATEGORY[category];
+            if (!sizes) return; // categoría no válida aún
+
+            sizes.forEach(size => {
+                const isChecked = selectedSizes.includes(size);
+
+                container.innerHTML += `
+                    <input type="checkbox" class="size-option" name="sizes" value="${size}" id="${containerId}_${size}" ${isChecked ? 'checked' : ''}>
+                    <label class="size-label" for="${containerId}_${size}">${size}</label>
+                `;
+            });
+        }
+
+        // ─── Obtiene las tallas seleccionadas de un contenedor ───
+        function getSelectedSizes(containerId) {
+            const checkboxes = document.querySelectorAll(`#${containerId} input[name="sizes"]:checked`);
+            return Array.from(checkboxes).map(cb => cb.value);
+        }
+
+        function checkAdminAccess() {
+            const createBtn = document.getElementById('createProductBtn');
+            
+            if (isAdmin()) {
+                createBtn.style.display = 'inline-block';
+            } else {
+                createBtn.style.display = 'none';
+            }
+        }
+
+        function toggleProductForm() {
+            const formSection = document.getElementById('productFormSection');
+            formSection.style.display = formSection.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function previewImage(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (event) {
+                    const preview = document.getElementById('imagePreview');
+                    preview.src = event.target.result;
+                    preview.style.display = 'block';
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function previewEditImage(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function (event) {
+                    const preview = document.getElementById('editImagePreview');
+                    preview.src = event.target.result;
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        async function createProduct(e) {
+            e.preventDefault();
+
+            const fileInput = document.getElementById('productImage');
+            if (!fileInput.files[0]) {
+                alert('Por favor selecciona una imagen');
+                return;
+            }
+
+            // Validar que se seleccione al menos una talla
+            const sizes = getSelectedSizes('createSizesContainer');
+            if (sizes.length === 0) {
+                alert('Por favor selecciona al menos una talla');
+                return;
+            }
+
+            try {
+                const formData = new FormData();
+                formData.append('name', document.getElementById('productName').value);
+                formData.append('price', document.getElementById('productPrice').value);
+                formData.append('description', document.getElementById('productDescription').value || '');
+                formData.append('category', document.getElementById('productCategory').value);
+                formData.append('stock', document.getElementById('productStock').value);
+                formData.append('image', fileInput.files[0]);
+
+                // Agregar tallas al FormData (cada una como entrada separada)
+                sizes.forEach(size => {
+                    formData.append('sizes', size);
+                });
+
+                const response = await fetchWithAuth('/api/admin/products', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response || !response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Error: ${errorText}`);
+                }
+
+                const newProduct = await response.json();
+                console.log('Producto creado:', newProduct);
+
+                document.getElementById('createProductForm').reset();
+                document.getElementById('imagePreview').style.display = 'none';
+                document.getElementById('createSizesContainer').innerHTML = '';
+                toggleProductForm();
+
+                alert('¡Producto creado exitosamente!');
+                loadProducts();
+
+            } catch (error) {
+                console.error('Error completo:', error);
+                alert('Error al crear el producto: ' + error.message);
+            }
+        }
+
+        function openEditModal(productId) {
+            const product = allProducts.find(p => p.id === productId);
+            if (!product) {
+                alert('Producto no encontrado');
+                return;
+            }
+
+            document.getElementById('editProductId').value = product.id;
+            document.getElementById('editProductName').value = product.name;
+            document.getElementById('editProductPrice').value = product.price;
+            document.getElementById('editProductStock').value = product.stock;
+            document.getElementById('editProductCategory').value = product.category;
+            document.getElementById('editProductDescription').value = product.description || '';
+
+            // Renderizar tallas pre-seleccionadas según las que ya tiene el producto
+            const currentSizes = product.sizes || [];
+            renderSizes('editSizesContainer', product.category, currentSizes);
+
+            const imageUrl = product.imageUrl
+                ? `http://localhost:8080/uploads/${product.imageUrl}`
+                : '/uploads/default.jpg';
+            document.getElementById('editImagePreview').src = imageUrl;
+
+            document.getElementById('editModal').style.display = 'block';
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').style.display = 'none';
+            document.getElementById('editProductForm').reset();
+            document.getElementById('editSizesContainer').innerHTML = '';
+        }
+
+        async function updateProduct(e) {
+            e.preventDefault();
+
+            const productId = document.getElementById('editProductId').value;
+
+            // Validar que se seleccione al menos una talla
+            const sizes = getSelectedSizes('editSizesContainer');
+            if (sizes.length === 0) {
+                alert('Por favor selecciona al menos una talla');
+                return;
+            }
+
+            try {
+                const formData = new FormData();
+                formData.append('name', document.getElementById('editProductName').value);
+                formData.append('price', document.getElementById('editProductPrice').value);
+                formData.append('description', document.getElementById('editProductDescription').value || '');
+                formData.append('category', document.getElementById('editProductCategory').value);
+                formData.append('stock', document.getElementById('editProductStock').value);
+
+                // Agregar tallas
+                sizes.forEach(size => {
+                    formData.append('sizes', size);
+                });
+
+                const imageFile = document.getElementById('editProductImage').files[0];
+                if (imageFile) {
+                    formData.append('image', imageFile);
+                }
+
+                const response = await fetchWithAuth(`/api/admin/products/${productId}`, {
+                    method: 'PUT',
+                    body: formData
+                });
+
+                if (!response || !response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Error: ${errorText}`);
+                }
+
+                alert('¡Producto actualizado exitosamente!');
+                closeEditModal();
+                loadProducts();
+
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al actualizar el producto: ' + error.message);
+            }
+        }
+
+        async function deleteProduct(productId) {
+            if (!confirm('¿Estás seguro de que deseas eliminar este producto?')) {
+                return;
+            }
+
+            try {
+                const response = await fetchWithAuth(`/api/admin/products/${productId}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response || !response.ok) {
+                    throw new Error('Error al eliminar el producto');
+                }
+
+                alert('Producto eliminado exitosamente');
+                loadProducts();
+
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al eliminar el producto');
+            }
+        }
+
+        async function loadProducts() {
+            try {
+                const response = await fetch('/api/products');
+                if (!response.ok) {
+                    throw new Error('Error al cargar productos');
+                }
+
+                const products = await response.json();
+                allProducts = products;
+
+                const container = document.getElementById('productsContainer');
+                container.innerHTML = '';
+
+                if (products.length === 0) {
+                    container.innerHTML = '<p style="text-align: center; color: #666;">No hay productos disponibles.</p>';
+                    return;
+                }
+
+                products.forEach(product => {
+                    addProductCard(product);
+                });
+            } catch (error) {
+                console.error('Error al cargar productos:', error);
+                document.getElementById('productsContainer').innerHTML =
+                    '<p style="text-align: center; color: red;">Error al cargar productos.</p>';
+            }
+        }
+
+        function addProductCard(product) {
+            const container = document.getElementById('productsContainer');
+            const productCard = document.createElement('div');
+            productCard.className = 'product-card';
+
+            const imageUrl = product.imageUrl
+                ? `http://localhost:8080/uploads/${product.imageUrl}`
+                : '/uploads/default.jpg';
+
+            // Si el producto no tiene sizes desde el backend, usar las de su categoría como fallback
+            const sizes = (product.sizes && product.sizes.length > 0)
+                ? product.sizes
+                : (SIZES_BY_CATEGORY[product.category] || []);
+
+            // Generar tags de tallas para la tarjeta
+            const sizesHtml = sizes.length > 0
+                ? `<p style="color: #666; font-size: 0.85rem; margin-bottom: 0.2rem;">Tallas disponibles:</p>
+                   <div class="product-sizes">${sizes.map(s => `<span class="product-size-tag">${s}</span>`).join('')}</div>`
+                : '';
+
+            // Botones de admin (solo visibles si es admin)
+            const adminButtons = isAdmin() ? `
+                <div class="admin-actions">
+                    <button onclick="openEditModal(${product.id})" class="btn-edit">Editar</button>
+                    <button onclick="deleteProduct(${product.id})" class="btn-delete">Eliminar</button>
+                </div>
+            ` : '';
+
+            productCard.innerHTML = `
+                <div onclick="openDetailModal(${product.id})" style="cursor:pointer;">
+                    <img src="${imageUrl}" alt="${product.name}" onerror="this.src='https://via.placeholder.com/300'">
+                </div>
+                <h3>${product.name}</h3>
+                <p>${product.description || ''}</p>
+                <p class="price">$${product.price.toFixed(2)}</p>
+                <p>Stock: ${product.stock}</p>
+                <p style="color: #666; font-size: 0.9rem;">Categoría: ${product.category}</p>
+                ${sizesHtml}
+                ${product.stock > 0 ?
+                    `<button onclick="openSizeModal(${product.id})" class="btn btn-primary">Agregar al Carrito</button>` :
+                    `<button class="btn btn-disabled" disabled>Agotado</button>`
+                }
+                ${adminButtons}
+            `;
+            container.appendChild(productCard);
+        }
+
+        // ─── Modal: seleccionar talla al agregar al carrito ───
+        let currentSizeModalProductId = null;
+
+        function openSizeModal(productId) {
+            const product = allProducts.find(p => p.id === productId);
+            if (!product) return;
+
+            // Mismo fallback: si no tiene sizes, usar las de su categoría
+            const sizes = (product.sizes && product.sizes.length > 0)
+                ? product.sizes
+                : (SIZES_BY_CATEGORY[product.category] || []);
+
+            // Si no tiene tallas ni por categoría, agregar directamente sin modal
+            if (sizes.length === 0) {
+                addToCart(productId);
+                return;
+            }
+
+            // Si tiene una sola talla (ej: "Único"), agregar directo también
+            if (sizes.length === 1) {
+                addToCart(productId, sizes[0]);
+                return;
+            }
+
+            currentSizeModalProductId = productId;
+
+            document.getElementById('sizeModalTitle').textContent = product.name;
+            document.getElementById('btnConfirmSize').disabled = true;
+
+            const container = document.getElementById('cartSizesContainer');
+            container.innerHTML = '';
+
+            sizes.forEach(size => {
+                container.innerHTML += `
+                    <input type="radio" class="cart-size-radio" name="cartSize" value="${size}" id="cartSize_${size}" onchange="document.getElementById('btnConfirmSize').disabled = false;">
+                    <label class="cart-size-label" for="cartSize_${size}">${size}</label>
+                `;
+            });
+
+            document.getElementById('sizeModal').style.display = 'block';
+        }
+
+        function closeSizeModal() {
+            document.getElementById('sizeModal').style.display = 'none';
+            currentSizeModalProductId = null;
+        }
+
+        function confirmAddToCart() {
+            const selected = document.querySelector('input[name="cartSize"]:checked');
+            if (!selected || !currentSizeModalProductId) return;
+
+            addToCart(currentSizeModalProductId, selected.value);
+            closeSizeModal();
+        }
+
+        // ─── Modal: detalle del producto ───
+        let currentDetailProductId = null;
+
+        function openDetailModal(productId) {
+            const product = allProducts.find(p => p.id === productId);
+            if (!product) return;
+
+            currentDetailProductId = productId;
+
+            const imageUrl = product.imageUrl
+                ? `http://localhost:8080/uploads/${product.imageUrl}`
+                : '/uploads/default.jpg';
+
+            const sizes = (product.sizes && product.sizes.length > 0)
+                ? product.sizes
+                : (SIZES_BY_CATEGORY[product.category] || []);
+
+            // Poblar campos
+            document.getElementById('detailImg').src = imageUrl;
+            document.getElementById('detailImg').alt = product.name;
+            document.getElementById('detailCategory').textContent = product.category;
+            document.getElementById('detailName').textContent = product.name;
+            document.getElementById('detailPrice').textContent = `$${product.price.toFixed(2)}`;
+            document.getElementById('detailDescription').textContent = product.description || 'Sin descripción disponible.';
+            document.getElementById('detailStock').textContent = product.stock > 0 ? product.stock : 'Agotado';
+
+            // Tallas
+            const sizesLabel = document.getElementById('detailSizesLabel');
+            const sizesContainer = document.getElementById('detailSizes');
+            if (sizes.length > 0) {
+                sizesLabel.style.display = 'block';
+                sizesContainer.innerHTML = sizes.map(s => `<span class="detail-size-tag">${s}</span>`).join('');
+            } else {
+                sizesLabel.style.display = 'none';
+                sizesContainer.innerHTML = '';
+            }
+
+            // Botón carrito
+            const btn = document.getElementById('btnDetailCarrito');
+            if (product.stock <= 0) {
+                btn.textContent = 'Agotado';
+                btn.disabled = true;
+            } else {
+                btn.textContent = 'Agregar al Carrito';
+                btn.disabled = false;
+            }
+
+            document.getElementById('detailModal').style.display = 'block';
+        }
+
+        function closeDetailModal() {
+            document.getElementById('detailModal').style.display = 'none';
+            currentDetailProductId = null;
+        }
+
+        function detailAddToCart() {
+            if (!currentDetailProductId) return;
+            closeDetailModal();
+            openSizeModal(currentDetailProductId);
+        }
+
+        // Cerrar modales al hacer clic fuera
+        window.onclick = function(event) {
+            if (event.target === document.getElementById('editModal')) {
+                closeEditModal();
+            }
+            if (event.target === document.getElementById('sizeModal')) {
+                closeSizeModal();
+            }
+            if (event.target === document.getElementById('detailModal')) {
+                closeDetailModal();
+            }
+        }
+    </script>
+</body>
+
+</html>
